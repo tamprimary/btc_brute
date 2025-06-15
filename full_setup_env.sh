@@ -2,7 +2,7 @@
 
 # --- Configuration ---
 PROJECT_DIR="btc_brute_force" # The main project folder name
-GITHUB_RAW_URL="https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/YOUR_REPO_NAME/main" # Base URL for raw files
+GITHUB_RAW_URL="https://raw.githubusercontent.com/tamprimary/btc_brute/main" # Base URL for raw files
 
 # List of files to download from GitHub
 # Adjust these URLs if your files are in a different repository or path
@@ -30,6 +30,7 @@ command_exists () {
 echo "Updating system package list..."
 sudo apt update || { echo "Failed to update package list. Exiting."; exit 1; }
 echo "System package list updated."
+echo " "
 
 # --- 2. Install openssl ---
 echo "Checking and installing openssl..."
@@ -38,8 +39,10 @@ then
     echo "openssl not found. Installing openssl..."
     sudo apt install -y openssl || { echo "Failed to install openssl. Exiting."; exit 1; }
     echo "openssl installed successfully."
+	echo " "
 else
     echo "openssl is already installed."
+	echo " "
 fi
 
 # --- 3. Install python3-venv (for creating virtual environments) ---
@@ -49,8 +52,10 @@ then
     echo "python3-venv not found. Installing python3-venv..."
     sudo apt install -y python3-venv || { echo "Failed to install python3-venv. Exiting."; exit 1; }
     echo "python3-venv installed successfully."
+	echo " "
 else
     echo "python3-venv is already installed."
+	echo " "
 fi
 
 # --- 4. Prepare project directory ---
@@ -63,6 +68,7 @@ else
 fi
 cd "$PROJECT_DIR" || { echo "Failed to change directory to $PROJECT_DIR. Exiting."; exit 1; }
 echo "Changed to directory: $(pwd)"
+echo " "
 
 # --- 5. Download files from GitHub ---
 echo "Downloading necessary files from GitHub..."
@@ -72,6 +78,7 @@ for file in "${DOWNLOAD_FILES[@]}"; do
     wget -q "$FILE_URL" -O "$file" || { echo "Failed to download $file. Please check URL and internet connection. Exiting."; exit 1; }
     echo "$file downloaded."
 done
+echo " "
 
 # --- 6. Create empty placeholder files if they don't exist ---
 echo "Creating placeholder files if they don't exist..."
@@ -83,6 +90,7 @@ for file in "${TOUCH_FILES[@]}"; do
         echo "File $file already exists."
     fi
 done
+echo " "
 
 # --- 7. Create and activate Python virtual environment ---
 echo "Creating Python virtual environment 'venv'..."
@@ -92,12 +100,14 @@ echo "Virtual environment 'venv' created."
 echo "Activating virtual environment..."
 source venv/bin/activate
 echo "Virtual environment activated. You should see (venv) in your prompt."
+echo " "
 
 # --- 8. Install Python libraries ---
 echo "Installing Python libraries: bit and pycryptodome..."
 pip install bit || { echo "Failed to install 'bit'. Exiting."; deactivate; exit 1; }
 pip install pycryptodome || { echo "Failed to install 'pycryptodome'. Exiting."; deactivate; exit 1; }
 echo "Python libraries installed successfully."
+echo " "
 
 echo " "
 echo "---------------------------------------------------------"
