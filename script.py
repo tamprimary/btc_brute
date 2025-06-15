@@ -4,10 +4,9 @@ import threading
 import smtplib
 import time
 from bit import Key
-
-# Required for subprocess calls to openssl
 import subprocess
-import base64 # Used for base64 encoding/decoding the final output
+import base64
+import argparse # Import the argparse module
 
 # Add necessary modules for email with attachments
 from email.mime.multipart import MIMEMultipart
@@ -15,14 +14,17 @@ from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
 
-# Email configuration (keep sensitive information confidential)
+# Email configuration defaults (will be passed as arguments to functions)
 SMTP_SERVER = 'smtp.gmail.com'
 SMTP_PORT = 587
-SMTP_USER = 'your_email@gmail.com'          # REPLACE WITH YOUR GMAIL ADDRESS
-SMTP_PASSWORD = 'your_app_password'     # REPLACE WITH YOUR GMAIL APP PASSWORD
-RECIPIENT_EMAIL = 'your_recipient_email@example.com' # REPLACE WITH RECIPIENT EMAIL
 
-ENCRYPTION_PASSWORD = "YOUR_STRONG_ENCRYPTION_PASSWORD" # REPLACE THIS WITH YOUR ACTUAL PASSWORD, DO NOT SHARE!
+#SMTP_USER = 'your_email@gmail.com'          # REPLACE WITH YOUR GMAIL ADDRESS
+#SMTP_PASSWORD = 'your_app_password'     # REPLACE WITH YOUR GMAIL APP PASSWORD
+#RECIPIENT_EMAIL = 'your_recipient_email@example.com' # REPLACE WITH RECIPIENT EMAIL
+#ENCRYPTION_PASSWORD = "YOUR_STRONG_ENCRYPTION_PASSWORD" # REPLACE THIS WITH YOUR ACTUAL PASSWORD, DO NOT SHARE!
+
+# SMTP_USER, SMTP_PASSWORD, RECIPIENT_EMAIL, ENCRYPTION_PASSWORD
+# will be passed as function arguments after being parsed from command line.
 
 # File path
 RICHES_FILE = "riches.txt"
@@ -30,7 +32,7 @@ FOUND_KEYS_FILE = "foundkey.txt"
 ENCRYPTED_DATA_FILE = "/tmp/encrypted_key.enc" # Temporary file name for encrypted data
 COUNT_FILE = "count.txt"
 
-# global variable testmail
+# global variable for testmail (controls a specific test key generation)
 testmail = True
 
 # --- HELPER FUNCTION TO RUN OPENSSL COMMANDS ---
@@ -62,32 +64,25 @@ def _run_openssl_command_simple(command_args, input_data):
         print(f"System error running openssl: {e}")
         raise
 
-# --- SIMPLIFIED ENCRYPTION/DECRYPTION FUNCTIONS USING OPENSSL ---
-def encrypt_message_openssl_simple(plaintext, password):
+# --- ENCRYPTION FUNCTION USING OPENSSL ---
+def encrypt_message_openssl_simple(plaintext, password): # Password is now a parameter
     """
     Encrypts plaintext using AES-256-CBC via openssl CLI with simple default options.
     """
-    # -aes-256-cbc: AES 256-bit CBC mode.
-    # -a: base64 encode output (makes it email-friendly).
-    # -k: password (openssl will automatically use it to derive key and salt).
-    # openssl will automatically add salt to the output, which is more secure.
     command_args = ['enc', '-aes-256-cbc', '-a', '-k', password]
     return _run_openssl_command_simple(command_args, plaintext.encode('utf-8'))
 
+# --- DECRYPTION FUNCTION (for the separate decrypt.py script, not used in this main script) ---
 def decrypt_message_openssl_simple(ciphertext_b64, password):
     """
     Decrypts base64 encoded ciphertext using AES-256-CBC via openssl CLI with simple default options.
     """
-    # -d: decrypt.
-    # -aes-256-cbc: AES 256-bit CBC mode.
-    # -a: base64 decode input.
-    # -k: password.
     command_args = ['enc', '-d', '-aes-256-cbc', '-a', '-k', password]
     return _run_openssl_command_simple(command_args, ciphertext_b64.encode('utf-8'))
-# --- END OF SIMPLIFIED ENCRYPTION/DECRYPTION FUNCTIONS ---
+# --- END OF OPENSSL FUNCTIONS ---
 
 def load_addresses(filepath):
-    """Import Bitcoin addresses from a file."""
+    """Loads Bitcoin addresses from a file."""
     try:
         with open(filepath, 'r') as f:
             return set(line.strip() for line in f)
@@ -95,138 +90,143 @@ def load_addresses(filepath):
         print(f"Error: Could not find file {filepath}")
         return set()
 
-def send_email(subject, message):
-    """Send alert email."""
-    try:
-        # Encrypt the message content before sending
-        encrypted_message = encrypt_message_openssl_simple(message, ENCRYPTION_PASSWORD)
-        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
-            server.ehlo()
-            server.starttls()
-            server.ehlo()
-            server.login(SMTP_USER, SMTP_PASSWORD)
-            #msg = f"Subject: {subject}\n\n{message}"
-            #server.sendmail(SMTP_USER, RECIPIENT_EMAIL, msg)
-            from_header = f"From: {SMTP_USER}"
-            to_header = f"To: {RECIPIENT_EMAIL}"
-            subject_header = f"Subject: {subject}"
-            full_msg = f"{from_header}\n{to_header}\n{subject_header}\n\n{encrypted_message}"
-            server.sendmail(SMTP_USER, [RECIPIENT_EMAIL], full_msg)
-            print("Email sent.")
-    except Exception as e:
-        print(f"Error sending email: {e}")
-
-def send_email_with_attachment(subject, body, filepath_to_attach, filename_in_email):
+# This function now explicitly takes email configuration as arguments
+def send_email_with_attachment(subject, body, filepath_to_attach, filename_in_email, smtp_user, smtp_password, recipient_email):
     """Sends an email with an attachment."""
     try:
         msg = MIMEMultipart()
-        msg['From'] = SMTP_USER
-        msg['To'] = RECIPIENT_EMAIL
+        msg['From'] = smtp_user
+        msg['To'] = recipient_email
         msg['Subject'] = subject
 
         msg.attach(MIMEText(body, 'plain'))
 
-        # Attach the file
-        attachment = open(filepath_to_attach, "rb")
-        part = MIMEBase('application', 'octet-stream')
-        part.set_payload(attachment.read())
+        with open(filepath_to_attach, "rb") as attachment:
+            part = MIMEBase('application', 'octet-stream')
+            part.set_payload(attachment.read())
+        
         encoders.encode_base64(part)
         part.add_header('Content-Disposition', f"attachment; filename= {filename_in_email}")
         msg.attach(part)
-        attachment.close()
 
         with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
             server.ehlo()
             server.starttls()
             server.ehlo()
-            server.login(SMTP_USER, SMTP_PASSWORD)
-            server.sendmail(SMTP_USER, [RECIPIENT_EMAIL], msg.as_string())
+            server.login(smtp_user, smtp_password)
+            server.sendmail(smtp_user, [recipient_email], msg.as_string())
             print(f"Email sent successfully via Gmail with attachment: {filename_in_email}.")
     except Exception as e:
         print(f"Error sending email with attachment via Gmail: {e}")
 
-def check_address(addresses, lock, counter):
-    """Verify random addresses with a loaded list."""
-    global testmail
+# check_address now receives all necessary email and encryption config as arguments
+def check_address(addresses, lock, counter, smtp_user, smtp_password, recipient_email, encryption_password):
+    """Verifies random Bitcoin addresses against a loaded list."""
+    global testmail # testmail remains global as it's a shared state flag
+    
     while True:
-        key = Key()
+        key = Key() # Generate a new random Bitcoin key
+        
+        # Logic for using a specific test key (for debugging/testing purposes)
         if testmail:
-            specific_test_wif = "Ky8rrHJDTkuiox8mfdKdKuXYV7VWFERX7zT25YZ4v8Asotx6XnMH"
+            specific_test_wif = "Ky8rrHJDTkuiox8mfdKdKuXYV7VWFERX7zT25YZ4v8Asotx6XnMH" # A known WIF (test key)
             key = Key(specific_test_wif)
             print(f"DEBUG: Using test key: {specific_test_wif}")
-            testmail = False
-        address = key.address
+            testmail = False # Reset flag so it only runs once per program execution
+        
+        address = key.address # Get the Bitcoin address for the generated key
 
+        # Check if the generated address is in our list of riches addresses
         if address in addresses:
-            with lock:
+            with lock: # Use a lock to ensure thread-safe file writing and email sending
+                # Append the found public address and private key to foundkey.txt
                 with open(FOUND_KEYS_FILE, 'a') as f:
                     f.write(f"Public Address: {address}\n")
                     f.write(f"Private Key: {key.to_wif()}\n")
                 
-                # Prepare content for encryption
+                # Prepare the sensitive content (Public Address and Private Key) for encryption
                 content_to_encrypt = f"Public Address: {address}\nPrivate Key: {key.to_wif()}"
                 
-                # Encrypt the content
-                encrypted_data_b64 = encrypt_message_openssl_simple(content_to_encrypt, ENCRYPTION_PASSWORD)
+                # Encrypt the content using openssl, passing the encryption_password
+                encrypted_data_b64 = encrypt_message_openssl_simple(content_to_encrypt, encryption_password)
                 
-                # Save the encrypted content to a temporary file
+                # Save the encrypted content to a temporary file for attachment
                 try:
                     with open(ENCRYPTED_DATA_FILE, 'w') as f:
                         f.write(encrypted_data_b64)
                     print(f"Encrypted data saved to {ENCRYPTED_DATA_FILE}")
                 except Exception as e:
                     print(f"Error saving encrypted data to file: {e}")
-                    # If file cannot be saved, at least print it for user visibility
+                    # Fallback: if file cannot be saved, print the encrypted data directly to console
                     print(f"Encrypted Data (Base64): {encrypted_data_b64}")
 
-                # Send email with the attached file
+                # Send an email with the temporary encrypted file as an attachment
                 email_subject = "Wow!! Matching Private Key Address Found! (Encrypted Attachment)"
                 email_body = "The sensitive information is attached in an encrypted file. Use the shared password to decrypt it."
-                send_email_with_attachment(email_subject, email_body, ENCRYPTED_DATA_FILE, "found_key.enc")
+                # Call send_email_with_attachment, passing all required email parameters
+                send_email_with_attachment(email_subject, email_body, ENCRYPTED_DATA_FILE, "found_key.enc", smtp_user, smtp_password, recipient_email)
                 
                 print(f"Matching address found: {address}")
                 
-                # Remove the temporary file after sending the email
+                # Remove the temporary encrypted file to clean up sensitive data from disk
                 try:
                     os.remove(ENCRYPTED_DATA_FILE)
                     print(f"Removed temporary encrypted file: {ENCRYPTED_DATA_FILE}")
                 except OSError as e:
                     print(f"Error removing temporary file {ENCRYPTED_DATA_FILE}: {e}")
 
-                #os._exit(0) # Exit the program after finding and sending email
-        """
-        if address in addresses:
-            with lock:
-                with open(FOUND_KEYS_FILE, 'a') as f:
-                    f.write(f"Public Adress: {address}\n")
-                    f.write(f"Private Key: {key.to_wif()}\n")
-                print(f"Matching Bitcoin address found: {address}")
-                send_email("Wow!! Matching Private Key address found!", f"Public Adress: {address}\nPrivate Key: {key.to_wif()}")
-                # Stop all threads after finding a match
-                #os._exit(0)  # Exit immediately
-        """
-        # Print progress every 100,000 iterations
+                #os._exit(0) # This exits all threads/processes immediately. Use with caution.
+        
+        # Update and print progress (thread-safe)
         with counter['lock']:
             counter['value'] += 1
             if counter['value'] % 100000 == 0:
                 print(f"Thread {threading.current_thread().name}: Checked {counter['value']} addresses")
+                # Append the current count to a file (optional, for persistent tracking)
                 with open(COUNT_FILE, 'a') as f:
                     f.write(f"{counter['value']}\n")
 
 if __name__ == "__main__":
+    # --- Command-line argument parsing ---
+    parser = argparse.ArgumentParser(description="Bitcoin Brute-Force Key Checker with Encrypted Email Notification.")
+    parser.add_argument('--smtp_user', type=str, required=True,
+                        help="Gmail address to send emails from (e.g., your_email@gmail.com).")
+    parser.add_argument('--smtp_password', type=str, required=True,
+                        help="Gmail App Password for the sending email account.")
+    parser.add_argument('--recipient_email', type=str, required=True,
+                        help="Email address to send alert notifications to.")
+    parser.add_argument('--encryption_password', type=str, required=True,
+                        help="Password used for encrypting sensitive key data in the attachment.")
+    # Removed --num_threads as a command line arg to keep original behavior for it.
+    
+    args = parser.parse_args()
+
+    # Assign parsed arguments to local variables in main
+    smtp_user_arg = args.smtp_user
+    smtp_password_arg = args.smtp_password
+    recipient_email_arg = args.recipient_email
+    encryption_password_arg = args.encryption_password
+
     addresses = load_addresses(RICHES_FILE)
     if not addresses:
-        exit()
+        print(f"No addresses loaded from {RICHES_FILE}. Exiting.")
+        exit(1)
 
     lock = threading.Lock()
     counter = {'value': 0, 'lock': threading.Lock()}
     threads = []
-    num_threads = os.cpu_count()-0 or 4  # Use the number of CPU cores, or 4 if not determinable
+    # Original logic for num_threads
+    num_threads = os.cpu_count()-0 or 4 # Use the number of CPU cores, or 4 if not determinable
 
     print(f"Starting check with {num_threads} threads...")
 
     for i in range(num_threads):
-        thread = threading.Thread(target=check_address, args=(addresses, lock, counter), name=f"Thread-{i+1}")
+        thread = threading.Thread(
+            target=check_address,
+            # Pass all the necessary arguments to the check_address function
+            args=(addresses, lock, counter, smtp_user_arg, smtp_password_arg, recipient_email_arg, encryption_password_arg),
+            name=f"Thread-{i+1}"
+        )
         threads.append(thread)
         thread.start()
 
