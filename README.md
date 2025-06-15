@@ -1,5 +1,3 @@
-# btc_brute
-Okay, here's the README.md content in English:
 
 -----
 
