@@ -50,11 +50,11 @@ This project is a Python tool designed to search for Bitcoin private keys that m
 1.  **Download the setup script:** Download the `full_setup.sh` file to your machine.
 2.  **Grant executable permissions:** Open your terminal and navigate to the directory where you saved `full_setup.sh`.
     ```bash
-    chmod +x full_setup.sh
+    chmod +x full_setup_env.sh
     ```
 3.  **Run the setup script:** This script will automatically install system dependencies, create the Python virtual environment, and download all project files into the `btc_brute_force` directory.
     ```bash
-    sudo ./full_setup.sh
+    sudo ./full_setup_env.sh
     ```
       * The script will prompt you for your user password for `sudo`.
       * During execution, it will automatically `cd` into the `btc_brute_force` directory.
