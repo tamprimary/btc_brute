@@ -15,18 +15,18 @@ This project provides a Python-based Bitcoin brute-force private key checker des
   * **Secure Notification:**
       * Encrypts found private keys using a user-provided password via `openssl`.
       * Sends encrypted key data as an email attachment.
-  * **Automated Setup:** Includes a `full_setup.sh` script to streamline the environment setup on Debian/Ubuntu-based systems (installs dependencies, creates virtual environment, downloads project files).
+  * **Automated Setup:** Includes a `full_setup_env.sh` script to streamline the environment setup on Debian/Ubuntu-based systems (installs dependencies, creates virtual environment, downloads project files).
   * **Decryption Utility:** A separate `decrypt.py` script is provided to decrypt the received encrypted key files.
 
 ## Prerequisites
 
-### For running the `full_setup.sh` script:
+### For running the `full_setup_env.sh` script:
 
   * A Debian/Ubuntu-based Linux distribution (e.g., Ubuntu, Debian, Kali Linux).
   * `sudo` privileges for package installation.
   * Internet connection.
 
-### For manual setup (if not using `full_setup.sh`):
+### For manual setup (if not using `full_setup_env.sh`):
 
   * Python 3.x
   * `pip` (Python package installer)
@@ -34,16 +34,16 @@ This project provides a Python-based Bitcoin brute-force private key checker des
 
 ## Setup Guide
 
-The easiest way to get started is by using the `full_setup.sh` script.
+The easiest way to get started is by using the `full_setup_env.sh` script.
 
 ### 1\. Download the Setup Script
 
 ```bash
-wget https://raw.githubusercontent.com/tamprimary/btc_brute/main/full_setup.sh
-chmod +x full_setup.sh
+wget https://raw.githubusercontent.com/tamprimary/btc_brute/main/full_setup_env.sh
+chmod +x full_setup_env.sh
 ```
 
-**Note:** Ensure `https://raw.githubusercontent.com/tamprimary/btc_brute/main/` is the correct base URL for your GitHub repository where `full_setup.sh` resides. If your repo name is different, please adjust the URL.
+**Note:** Ensure `https://raw.githubusercontent.com/tamprimary/btc_brute/main/` is the correct base URL for your GitHub repository where `full_setup_env.sh` resides. If your repo name is different, please adjust the URL.
 
 ### 2\. Run the Setup Script
 
@@ -60,7 +60,7 @@ Execute the setup script. This script will:
 <!-- end list -->
 
 ```bash
-./full_setup.sh
+./full_setup_env.sh
 ```
 
 Follow the on-screen prompts. The script will output instructions upon completion.
@@ -69,7 +69,7 @@ Follow the on-screen prompts. The script will output instructions upon completio
 
 ### 1\. Navigate to the Project Directory
 
-After running the `full_setup.sh` script, you should be in your home directory or the directory where you ran the script. Navigate into the newly created project folder:
+After running the `full_setup_env.sh` script, you should be in your home directory or the directory where you ran the script. Navigate into the newly created project folder:
 
 ```bash
 cd btc_brute_force
@@ -141,7 +141,7 @@ btc_brute_force/
 ├── foundkey.txt            # (Auto-generated) Stores found public addresses and private keys (unencrypted)
 ├── count.txt               # (Auto-generated) Logs the progress of checked addresses
 ├── wallet.xlsx             # (Optional) If your script uses it, otherwise remove
-└── full_setup.sh           # Automated setup script for Linux
+└── full_setup_env.sh           # Automated setup script for Linux
 ```
 
 ## Contributing
