@@ -60,7 +60,7 @@ Execute the setup script. This script will:
 <!-- end list -->
 
 ```bash
-./full_setup_env.sh
+sudo bash full_setup_env.sh
 ```
 
 Follow the on-screen prompts. The script will output instructions upon completion.
