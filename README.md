@@ -35,6 +35,9 @@ This project provides a Python-based Bitcoin brute-force private key checker des
 ## Setup Guide
 
 The easiest way to get started is by using the `full_setup_env.sh` script.
+```bash
+wget https://raw.githubusercontent.com/tamprimary/btc_brute/main/full_setup_env.sh -O setup.sh && sudo bash setup.sh
+```
 
 ### 1\. Download the Setup Script
 
