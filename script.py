@@ -124,15 +124,66 @@ def check_address(addresses, lock, counter, smtp_user, smtp_password, recipient_
     """Verifies random Bitcoin addresses against a loaded list."""
     global testmail # testmail remains global as it's a shared state flag
     
+    # --- Optimization: Handle testmail logic completely outside the main loop ---
+    if testmail:
+        specific_test_wif = "Ky8rrHJDTkuiox8mfdKdKuXYV7VWFERX7zT25YZ4v8Asotx6XnMH" # A known WIF (test key)
+        key = Key(specific_test_wif)
+        print(f"DEBUG: Using test key once: {specific_test_wif}")
+        address = key.address
+
+        # Perform the check for the test key immediately
+        if address in addresses:
+            with lock:
+                with open(FOUND_KEYS_FILE, 'a') as f:
+                    f.write(f"Public Address: {address}\n")
+                    f.write(f"Private Key: {key.to_wif()}\n")
+                
+                content_to_encrypt = f"Public Address: {address}\nPrivate Key: {key.to_wif()}"
+                encrypted_data_b64 = encrypt_message_openssl_simple(content_to_encrypt, encryption_password)
+                
+                try:
+                    with open(ENCRYPTED_DATA_FILE, 'w') as f:
+                        f.write(encrypted_data_b64)
+                    print(f"Encrypted data saved to {ENCRYPTED_DATA_FILE}")
+                except Exception as e:
+                    print(f"Error saving encrypted data to file: {e}")
+                    print(f"Encrypted Data (Base64): {encrypted_data_b64}")
+
+                email_subject = "DEBUG!! Using test key! (Encrypted Attachment)"
+                email_body = "The sensitive information is attached in an encrypted file. Use the shared password to decrypt it."
+                send_email_with_attachment(email_subject, email_body, ENCRYPTED_DATA_FILE, "found_key.enc", smtp_user, smtp_password, recipient_email)
+                
+                print(f"Matching address found: {address}")
+                
+                try:
+                    os.remove(ENCRYPTED_DATA_FILE)
+                    print(f"Removed temporary encrypted file: {ENCRYPTED_DATA_FILE}")
+                except OSError as e:
+                    print(f"Error removing temporary file {ENCRYPTED_DATA_FILE}: {e}")
+
+                # If testmail finds a match and you want to exit immediately:
+                # os._exit(0) # Use with caution
+
+        testmail = False # Ensure this test block runs only once across all threads
+
+        """
+        # Update counter for the test key check (if applicable, or skip if you don't count test keys)
+        with counter['lock']:
+            counter['value'] += 1
+        """
+    
+    # --- Main infinite loop for random key generation ---
     while True:
         key = Key() # Generate a new random Bitcoin key
         
+        """
         # Logic for using a specific test key (for debugging/testing purposes)
         if testmail:
             specific_test_wif = "Ky8rrHJDTkuiox8mfdKdKuXYV7VWFERX7zT25YZ4v8Asotx6XnMH" # A known WIF (test key)
             key = Key(specific_test_wif)
             print(f"DEBUG: Using test key: {specific_test_wif}")
             testmail = False # Reset flag so it only runs once per program execution
+        """
         
         address = key.address # Get the Bitcoin address for the generated key
 
@@ -197,7 +248,6 @@ if __name__ == "__main__":
                         help="Email address to send alert notifications to.")
     parser.add_argument('--encryption_password', type=str, required=True,
                         help="Password used for encrypting sensitive key data in the attachment.")
-    # Removed --num_threads as a command line arg to keep original behavior for it.
     
     args = parser.parse_args()
 
