@@ -1,5 +1,7 @@
 #!/bin/bash
 
+#wget https://raw.githubusercontent.com/tamprimary/btc_brute/main/full_setup_env.sh -O setup.sh && sudo bash setup.sh
+
 # --- Configuration ---
 PROJECT_DIR="btc_brute_force" # The main project folder name
 GITHUB_RAW_URL="https://raw.githubusercontent.com/tamprimary/btc_brute/main" # Base URL for raw files
