@@ -126,6 +126,7 @@ def check_address(addresses, lock, counter, smtp_user, smtp_password, recipient_
     
     # --- Optimization: Handle testmail logic completely outside the main loop ---
     if testmail:
+        testmail = False # Ensure this test block runs only once across all threads
         specific_test_wif = "Ky8rrHJDTkuiox8mfdKdKuXYV7VWFERX7zT25YZ4v8Asotx6XnMH" # A known WIF (test key)
         key = Key(specific_test_wif)
         print(f"DEBUG: Using test key once: {specific_test_wif}")
@@ -163,8 +164,6 @@ def check_address(addresses, lock, counter, smtp_user, smtp_password, recipient_
 
                 # If testmail finds a match and you want to exit immediately:
                 # os._exit(0) # Use with caution
-
-        testmail = False # Ensure this test block runs only once across all threads
 
         """
         # Update counter for the test key check (if applicable, or skip if you don't count test keys)
