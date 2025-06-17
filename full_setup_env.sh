@@ -88,7 +88,7 @@ for file in "${TOUCH_FILES[@]}"; do
     if [ ! -f "$file" ]; then
         touch "$file"
         echo "Created empty file: $file"
-	sudo chmod o+w "$file"
+		sudo chmod o+w "$file"
     else
         echo "File $file already exists."
     fi
@@ -128,3 +128,5 @@ echo "cd btc_brute_force"
 echo "sudo chmod o+w foundkey.txt count.txt or sudo chown username:username foundkey.txt count.txt"
 echo "source venv/bin/activate"
 echo "python script.py --smtp_user 'your_gmail_address@gmail.com' --smtp_password 'your_gmail_app_password' --recipient_email 'your_recipient_email@example.com' --encryption_password 'YourStrongEncryptionPassword123'"
+echo "---------------------------------------------------------"
+echo " "
