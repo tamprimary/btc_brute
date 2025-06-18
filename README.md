@@ -1,158 +1,135 @@
------
-
 # BTC Brute Force Key Checker
 
-This project provides a Python-based Bitcoin brute-force private key checker designed to find matching Bitcoin addresses from a predefined list. Upon finding a match, it securely encrypts the sensitive key information and sends it via email. A setup script is included to automate the environment configuration on Linux systems.
+This tool continuously generates random Bitcoin addresses and checks them against a target list. If a match is found, it encrypts the corresponding private key and sends it via email.
 
-## ⚠️ Disclaimer
+## Tool's Core Functionality
 
-**This tool is for educational and experimental purposes only.** Brute-forcing Bitcoin private keys is computationally infeasible for all practical purposes, given the vastness of the Bitcoin address space. Attempting to find private keys for existing addresses is highly unlikely to succeed and may be considered a waste of resources. Do not use this tool for any illegal or malicious activities. The developers are not responsible for any misuse of this software.
+  * **Random Bitcoin Key Generation:** Continuously generates random Bitcoin key pairs (private key and public address).
+  * **Address Checking:** Compares the newly generated Bitcoin address against a pre-provided list of target Bitcoin addresses (in the `riches.txt` file).
+  * **Secure Notification:** If a matching address is found, the private key will be encrypted using a password you provide and sent to your recipient email address as an attachment.
+  * **Multi-threading:** Utilizes multiple processing threads to accelerate the checking process.
+  * **Decryption Tool:** Includes a separate script (`decrypt.py`) to decrypt the encrypted key files you receive via email.
+  * **Automated Setup:** The `full_setup_env.sh` script helps to automatically set up the necessary environment on a Linux system.
 
-## Features
+## ⚠️ Important Note
 
-  * **Multi-threaded:** Leverages multiple CPU cores for faster checking.
-  * **Targeted Search:** Checks generated keys against a custom list of Bitcoin addresses (`riches.txt`).
-  * **Secure Notification:**
-      * Encrypts found private keys using a user-provided password via `openssl`.
-      * Sends encrypted key data as an email attachment.
-  * **Automated Setup:** Includes a `full_setup_env.sh` script to streamline the environment setup on Debian/Ubuntu-based systems (installs dependencies, creates virtual environment, downloads project files).
-  * **Decryption Utility:** A separate `decrypt.py` script is provided to decrypt the received encrypted key files.
+**This tool is intended for educational and experimental purposes only.** Brute-forcing Bitcoin private keys is an extremely difficult and practically impossible task due to the immense size of the Bitcoin address space. Using this tool to find keys for existing addresses is highly unlikely to succeed.
 
 ## Prerequisites
 
-### For running the `full_setup_env.sh` script:
+### For System (when using `full_setup_env.sh`):
 
-  * A Debian/Ubuntu-based Linux distribution (e.g., Ubuntu, Debian, Kali Linux).
-  * `sudo` privileges for package installation.
+  * Debian/Ubuntu-based Linux operating system (e.g., Ubuntu, Debian, Kali Linux).
+  * `sudo` privileges to install system packages.
   * Internet connection.
 
-### For manual setup (if not using `full_setup_env.sh`):
+### For Manual Installation:
 
   * Python 3.x
   * `pip` (Python package installer)
-  * `openssl` (command-line tool)
+  * `openssl` (command-line utility)
 
-## Setup Guide
+## Setup Guide (`full_setup_env.sh`)
 
 The easiest way to get started is by using the `full_setup_env.sh` script.
-```bash
-wget https://raw.githubusercontent.com/tamprimary/btc_brute/main/full_setup_env.sh -O setup.sh && sudo bash setup.sh
-```
 
-### 1\. Download the Setup Script
+1.  **Download and Run the Setup Script:**
 
-```bash
-wget https://raw.githubusercontent.com/tamprimary/btc_brute/main/full_setup_env.sh
-chmod +x full_setup_env.sh
-```
+    ```bash
+    wget https://raw.githubusercontent.com/tamprimary/btc_brute/main/full_setup_env.sh -O setup.sh && sudo bash setup.sh
+    ```
 
-**Note:** Ensure `https://raw.githubusercontent.com/tamprimary/btc_brute/main/` is the correct base URL for your GitHub repository where `full_setup_env.sh` resides. If your repo name is different, please adjust the URL.
+      * `wget ... -O setup.sh`: Downloads the script from GitHub and saves it as `setup.sh`.
+      * `&&`: Ensures the second command runs only if the download is successful.
+      * `sudo bash setup.sh`: Executes the script with superuser privileges.
 
-### 2\. Run the Setup Script
+    This script will automatically:
 
-Execute the setup script. This script will:
+      * Update the system.
+      * Install necessary tools (`openssl`, `python3-venv`).
+      * Create the `btc_brute_force` project directory.
+      * Download essential files (`script.py`, `decrypt.py`, `riches.txt`, etc.).
+      * Set up a Python virtual environment (`venv`) and install Python libraries (`bit`, `pycryptodome`).
+      * Install a cron job to automatically clear your log file (`script.log`) daily.
 
-  * Update system packages.
-  * Install `openssl` and `python3-venv` (if not already installed).
-  * Create a project directory named `btc_brute_force`.
-  * Download `script.py`, `decrypt.py`, `riches.txt`, and `wallet.xlsx` (if specified) into the project directory.
-  * Create empty `foundkey.txt` and `count.txt` files.
-  * Set up a Python virtual environment (`venv`).
-  * Install required Python libraries (`bit`, `pycryptodome`).
-
-<!-- end list -->
-
-```bash
-sudo bash full_setup_env.sh
-```
-
-Follow the on-screen prompts. The script will output instructions upon completion.
+    Please follow the on-screen prompts during the script's execution.
 
 ## Usage
 
-### 1\. Navigate to the Project Directory
+Once the setup is complete, you can run the main tool.
 
-After running the `full_setup_env.sh` script, you should be in your home directory or the directory where you ran the script. Navigate into the newly created project folder:
+1.  **Navigate to the Project Directory:**
 
-```bash
-cd btc_brute_force
-```
+    ```bash
+    cd btc_brute_force
+    ```
 
-### 2\. Activate the Virtual Environment
+2.  **Activate the Virtual Environment:**
+    This ensures you are using the correct installed libraries.
 
-It's crucial to activate the Python virtual environment to ensure all dependencies are correctly used.
+    ```bash
+    source venv/bin/activate
+    ```
 
-```bash
-source venv/bin/activate
-```
+    You should see `(venv)` appear at the beginning of your command prompt.
 
-You should see `(venv)` prepended to your terminal prompt, indicating the virtual environment is active.
+3.  **Prepare the `riches.txt` file:**
+    This file contains the list of Bitcoin addresses you want to check against. Each address should be on a separate line.
+    Example `riches.txt`:
 
-### 3\. Prepare `riches.txt`
+    ```
+    1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa
+    1Mz715NAWmm1NDJ39QYg9ESgiMmddyXdnX
+    ```
 
-The `riches.txt` file should contain the Bitcoin addresses you want to check against, with one address per line.
+4.  **Run the Key Checking Script (`script.py`):**
+    You need to provide your email information and encryption password via arguments.
+    **Important:** For `smtp_password`, use a **Gmail App Password**, not your regular Gmail password. Learn how to generate an App Password at [Google Support](https://support.google.com/accounts/answer/185833?hl=vi).
 
-Example `riches.txt`:
+    ```bash
+    nohup python script.py \
+        --smtp_user 'your_sending_email@gmail.com' \
+        --smtp_password 'your_gmail_app_password' \
+        --recipient_email 'your_recipient_email@example.com' \
+        --encryption_password 'YourStrongEncryptionPassword123' \
+        > script.log 2>&1 &
+    ```
 
-```
-1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa
-1Mz715NAWmm1NDJ39QYg9ESgiMmddyXdnX
-...
-```
+      * `nohup ... &`: This command allows the script to run in the background even if you close the terminal.
+      * `> script.log 2>&1`: All script output will be redirected to the `script.log` file.
 
-### 4\. Run the Bitcoin Key Checker (`script.py`)
+5.  **Check Status and Logs:**
 
-The `script.py` now requires command-line arguments for your email and encryption configuration. Replace the placeholder values with your actual information.
+      * To see if the script is running: `ps aux | grep script.py`
+      * To view script messages (logs): `tail -f script.log` (press `Ctrl+C` to exit `tail`).
 
-  * `--smtp_user`: Your Gmail address (e.g., `your_email@gmail.com`). **You must use a Gmail App Password, not your regular Gmail password, for security reasons.** See [Google's instructions on App Passwords](https://support.google.com/accounts/answer/185833?hl=vi).
-  * `--smtp_password`: Your Gmail App Password.
-  * `--recipient_email`: The email address where you want to receive notifications. This can be the same as `--smtp_user`.
-  * `--encryption_password`: A strong password that will be used to encrypt the found private keys. **Do not share this password.** You will need it to decrypt the attachment later.
+6.  **Decrypt Found Keys (`decrypt.py`):**
+    If you receive an email with an attachment (`found_key.enc`), download that file to your project directory. Then run:
 
-<!-- end list -->
+    ```bash
+    python decrypt.py --input_file found_key.enc --encryption_password 'YourStrongEncryptionPassword123'
+    ```
 
-```bash
-python script.py \
-    --smtp_user 'your_gmail_address@gmail.com' \
-    --smtp_password 'your_gmail_app_password' \
-    --recipient_email 'your_recipient_email@example.com' \
-    --encryption_password 'YourStrongEncryptionPassword123'
-```
-
-The script will start generating and checking addresses. If a match is found, an email will be sent to the `recipient_email` with an encrypted attachment (`found_key.enc`) containing the public address and the corresponding private key.
-
-### 5\. Decrypting Found Keys (`decrypt.py`)
-
-If you receive an encrypted attachment (`found_key.enc`), you can use the `decrypt.py` script to decrypt it.
-
-First, download the `found_key.enc` file from your email to your project directory. Then run:
-
-```bash
-python decrypt.py --input_file found_key.enc --encryption_password 'YourStrongEncryptionPassword123'
-```
-
-Replace `'YourStrongEncryptionPassword123'` with the exact password you used during encryption. The decrypted content will be printed to your console.
+    Replace `'YourStrongEncryptionPassword123'` with the password you used for encryption. The decrypted content will be displayed on your terminal.
 
 ## Project Structure
 
 ```
 btc_brute_force/
 ├── venv/                   # Python virtual environment
-├── script.py               # Main Bitcoin key checker script
+├── script.py               # Main Bitcoin key checking script
 ├── decrypt.py              # Script to decrypt found key files
-├── riches.txt              # List of Bitcoin addresses to check against (one per line)
-├── foundkey.txt            # (Auto-generated) Stores found public addresses and private keys (unencrypted)
-├── count.txt               # (Auto-generated) Logs the progress of checked addresses
-├── wallet.xlsx             # (Optional) If your script uses it, otherwise remove
-└── full_setup_env.sh           # Automated setup script for Linux
+├── riches.txt              # List of target Bitcoin addresses (one address per line)
+├── foundkey.txt            # (Automatically created) Stores found public addresses and private keys
+├── count.txt               # (Automatically created) Stores the latest count of checked addresses
+├── wallet.xlsx             # (Optional) If your script uses it, otherwise ignore
+└── full_setup_env.sh       # Automated setup script for Linux
 ```
 
 ## Contributing
 
-Feel free to open issues or submit pull requests if you have suggestions for improvements or bug fixes.
+You can contribute by opening issues or submitting pull requests for improvements or bug fixes.
 
 ## License
 
-[MIT License](https://www.google.com/search?q=LICENSE) (It's good practice to include a https://www.google.com/search?q=LICENSE file in your repo)
-
------
+[MIT License](https://www.google.com/search?q=LICENSE) (You should add a https://www.google.com/search?q=LICENSE file to your repo)
