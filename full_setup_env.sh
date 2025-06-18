@@ -69,6 +69,7 @@ else
     echo "Directory $PROJECT_DIR created."
 fi
 cd "$PROJECT_DIR" || { echo "Failed to change directory to $PROJECT_DIR. Exiting."; exit 1; }
+CURRENT_PROJECT_PATH=$(pwd) # Capture the actual path of the project directory
 echo "Changed to directory: $(pwd)"
 echo " "
 
