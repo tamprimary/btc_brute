@@ -112,21 +112,38 @@ pip install pycryptodome || { echo "Failed to install 'pycryptodome'. Exiting.";
 echo "Python libraries installed successfully."
 echo " "
 
+# --- Deactivate venv after installation if not needed for the rest of setup ---
+deactivate
+echo "Virtual environment deactivated."
 echo " "
+
+# --- 9. Setup Cron Job for Log Cleanup (Modified to handle /root/ path) ---
+echo "Setting up cron job to clear script.log daily..."
+CRON_JOB_COMMAND="0 0 * * * rm ${CURRENT_PROJECT_PATH}/script.log"
+# Get the current crontab for root
+(sudo crontab -l 2>/dev/null | grep -v -F "${CRON_JOB_COMMAND}" ; echo "${CRON_JOB_COMMAND}") | sudo crontab -
+echo "Cron job added: ${CRON_JOB_COMMAND}"
+echo " "
+
 echo "---------------------------------------------------------"
 echo "System setup complete. Your environment is ready!"
 echo "Project directory: $(pwd)"
+echo "A cron job has been set up to clear ${CURRENT_PROJECT_PATH}/script.log daily at midnight."
 echo "To run your main Python script (e.g., script.py),"
 echo "make sure you are in the '$PROJECT_DIR' directory"
 echo "and the virtual environment is activated (you should see (venv) in your prompt)."
 echo "If not, run: source venv/bin/activate"
-echo "Then run your script: python script.py"
+echo "Then run your script:"
+echo "nohup python script.py --smtp_user 'your_gmail_address@gmail.com' --smtp_password 'your_gmail_app_password' --recipient_email 'your_recipient_email@example.com' --encryption_password 'YourStrongEncryptionPassword123' > script.log 2>&1 &"
+echo "To check log: tail -f script.log"
+echo "To stop script: pkill -f 'python script.py'"
 echo "---------------------------------------------------------"
 echo " "
+
 echo "RUN:"
 echo "cd btc_brute_force"
 echo "sudo chmod o+w foundkey.txt count.txt or sudo chown username:username foundkey.txt count.txt"
 echo "source venv/bin/activate"
-echo "python script.py --smtp_user 'your_gmail_address@gmail.com' --smtp_password 'your_gmail_app_password' --recipient_email 'your_recipient_email@example.com' --encryption_password 'YourStrongEncryptionPassword123'"
+echo "python script.py --smtp_user 'your_gmail_address@gmail.com' --smtp_password 'your_gmail_app_password' --recipient_email 'your_recipient_email@example.com' --encryption_password 'YourStrongEncryptionPassword123' > script.log 2>&1 &"
 echo "---------------------------------------------------------"
 echo " "
