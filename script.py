@@ -233,7 +233,7 @@ def check_address(addresses, lock, counter, smtp_user, smtp_password, recipient_
             if counter['value'] % 100000 == 0:
                 print(f"Thread {threading.current_thread().name}: Checked {counter['value']} addresses")
                 # Append the current count to a file (optional, for persistent tracking)
-                with open(COUNT_FILE, 'a') as f:
+                with open(COUNT_FILE, 'w') as f: # Changed 'a' to 'w'
                     f.write(f"{counter['value']}\n")
 
 if __name__ == "__main__":
