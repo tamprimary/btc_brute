@@ -88,7 +88,7 @@ for file in "${TOUCH_FILES[@]}"; do
     if [ ! -f "$file" ]; then
         touch "$file"
         echo "Created empty file: $file"
-		sudo chmod o+w "$file"
+        sudo chmod o+w "$file"
     else
         echo "File $file already exists."
     fi
