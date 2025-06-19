@@ -174,7 +174,7 @@ def check_address(addresses, lock, counter, smtp_user, smtp_password, recipient_
     # --- Main infinite loop for random key generation ---
     while True:
         key = Key() # Generate a new random Bitcoin key
-        time.sleep(0.0001)
+        time.sleep(0.00003)
         """
         # Logic for using a specific test key (for debugging/testing purposes)
         if testmail:
